@@ -6,7 +6,8 @@ const getContent = new mongoose.Schema({
     text : {type: String, required: false},
     status: {type: String, required: true},
     likes : {type: Number, required: false},
-    comments: {type: Array, required: false}
+    comments: [String],
+    createdAt: {type: Date, required: false}
 });
 
 module.exports = mongoose.model('getCont',getContent);
