@@ -19,14 +19,13 @@ var createProfile = function (req,res){
                     })
                 }
                 else{
-                    console.log(new Date(req.body.dateOfBirth))
                     const user_profile = new Profile({
                         name: req.body.name, 
                         email: req.body.email,
                         age: req.body.age,
                         gender: req.body.gender,
-                        dateOfBirth: new Date(req.body.dateOfBirth),
-                        location: req.body.location,
+                        dateOfBirth: req.body.dateOfBirth,
+                        location: {"type": "Point","coordinates":req.body.location},
                         createdAt: new Date()
                     });
                     user_profile
@@ -51,16 +50,17 @@ var createProfile = function (req,res){
 
 var profSugg = function (req,res){
     let profSuggestion = {
-        name : req.query.name,
-        coordinates : req.query.coordinates,
+        coordinates : JSON.parse(req.query.coordinates),
         distance : req.query.distance
     }
 
     Profile.aggregate([
         { $geoNear:{
             near:{
-                type: "Point",
-                coordinates: profSuggestion.coordinates
+                $geometry:{
+                    type: "Point",
+                    coordinates: profSuggestion.coordinates
+                }
             },
             key: 'location',
             distanceField: profSuggestion.distance,
@@ -74,6 +74,7 @@ var profSugg = function (req,res){
             })
         })
         .catch(err =>{
+            console.log(err);
             res.send({
                 status: "Error Occurred !!!",
                 message: "can't retrive the profile suggestions due to error !!!!",
@@ -86,12 +87,11 @@ var profSugg = function (req,res){
 var addFrnds = function (req,res){
     let addFrnds = {
         _id: req.body._id,
-        friends: {
-            _id:req.body.friends._id
-        }
+        friends:req.body.friends._id
     }
 
-    Profile.findByIdAndUpdate({_id: addFrnds._id},{$push: {friends: addFrnds.friends._id}},{safe: true,new: true, upsert: true })
+    //console.log(JSON.stringify(addFrnds.friends))
+    Profile.updateOne({_id: addFrnds._id},{$push: {friends: addFrnds.friends}},{safe: true,new: true, upsert: true })
         .then(data =>{
             res.send({
                 status: "Success",
