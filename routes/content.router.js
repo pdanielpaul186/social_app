@@ -9,6 +9,9 @@ router.post("/",content.uploadPost);
 //find posts
 router.get("/",content.postList);
 
+//view your posts
+router.get("/viewCont",content.viewCont);
+
 //like posts
 router.post("/like",content.postLike);
 

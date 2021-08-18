@@ -217,9 +217,35 @@ var postComment = function(req,res){
         })
 }
 
+const viewCont = async function(req,res){
+    if(!req.query._id){
+        res.send({
+            status:"Fail",
+            message : "Important data missing Kindly check and send again"
+        })
+    }
+    else{
+        await Content.find({userID:req.query._id},{post:0}).sort({createdAt: -1})
+            .then(data =>{
+                res.send({
+                    status:"Success",
+                    message:"Your posts are here !!!!",
+                    data : data
+                })
+            })
+            .catch(err =>{
+                res.send({
+                    status:"Fail",
+                    message: "Error Ocurred while querying!!!!"
+                })
+            })
+    }
+}
+
 module.exports = {
     uploadPost : uploadPost,
     postList : postList,
     postLike : postLike,
-    postComment : postComment
+    postComment : postComment,
+    viewCont : viewCont
 }
