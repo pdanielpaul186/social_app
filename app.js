@@ -9,6 +9,7 @@ var firebase = require('./config/firebase');
 
 //router initialization
 var profileRouter = require('./routes/profile.router');
+var contentRouter = require('./routes/content.router');
 
 var app = express();
 
@@ -18,12 +19,13 @@ app.set('view engine', 'pug');
 
 app.use(logger('dev'));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 //end points for router
 app.use('/', profileRouter);
+app.use('/content',contentRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
