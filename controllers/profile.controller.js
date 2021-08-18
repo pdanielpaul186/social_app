@@ -15,7 +15,7 @@ var createProfile = function (req,res){
                 if(data > 0 ){
                     res.send({
                         status: "Error Occurred !!!",
-                        message: "Email ID already present !!! \n Please Sign-in !!!!" 
+                        message: "Email ID already present !! Please Sign-in !!!!" 
                     })
                 }
                 else{

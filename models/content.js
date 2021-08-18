@@ -5,6 +5,7 @@ const Content = new mongoose.Schema({
     email : {type: String, required: true},
     text : {type: String, required: false},
     fileType:{type: String, required: false},
+    firebaseFile:{type: String, required: false},
     status: {type: String, required: false},
     likes : {type: Number, required: false},
     comments: [String],
