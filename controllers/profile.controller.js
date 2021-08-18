@@ -49,45 +49,52 @@ var createProfile = function (req,res){
 }
 
 var profSugg = function (req,res){
-    let profSuggestion = {
-        coordinates : JSON.parse(req.query.coordinates),
-        distance : req.query.distance
+    if(!req.query.coordinates && !req.query.distance){
+        res.send({
+            status: "Error Occurred !!!",
+            message: "Important Details Not Provided !!! \n Kindly Check !!!!"
+        })
     }
-
-    Profile.aggregate([
-        { $geoNear:{
-            near:{
-                $geometry:{
-                    type: "Point",
-                    coordinates: profSuggestion.coordinates
-                }
-            },
-            key: 'location',
-            distanceField: profSuggestion.distance,
-            spherical: true
-        }}])
-        .then(data =>{
-            res.send({
-                status: "Success",
-                message: "Your Profile suggestions are here !!!!",
-                data: data
+    else{
+        let profSuggestion = {
+            coordinates : JSON.parse(req.query.coordinates),
+            distance : req.query.distance
+        }
+    
+        Profile.aggregate([
+            { $geoNear:{
+                near:{
+                    $geometry:{
+                        type: "Point",
+                        coordinates: profSuggestion.coordinates
+                    }
+                },
+                key: 'location',
+                distanceField: profSuggestion.distance,
+                spherical: true
+            }}])
+            .then(data =>{
+                res.send({
+                    status: "Success",
+                    message: "Your Profile suggestions are here !!!!",
+                    data: data
+                })
             })
-        })
-        .catch(err =>{
-            console.log(err);
-            res.send({
-                status: "Error Occurred !!!",
-                message: "can't retrive the profile suggestions due to error !!!!",
-                error: err
+            .catch(err =>{
+                console.log(err);
+                res.send({
+                    status: "Error Occurred !!!",
+                    message: "can't retrive the profile suggestions due to error !!!!",
+                    error: err
+                })
             })
-        })
-        
+    }    
 }
 
 var addFrnds = function (req,res){
     let addFrnds = {
         _id: req.body._id,
-        friends:req.body.friends._id
+        friends:req.body.friends_id
     }
 
     //console.log(JSON.stringify(addFrnds.friends))
