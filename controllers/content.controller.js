@@ -14,6 +14,7 @@ const upload = multer({ //multer settings
 }).single('file');;
 
 const Content = require('../models/content');
+const { file } = require('../config/firebase');
 
 var uploadPost = async function(req,res){
     if(!req.query.email){
@@ -23,35 +24,63 @@ var uploadPost = async function(req,res){
         })
     }
     else{
-        const name = saltedMd5(req.file.originalname,"social_app");
-        const fileName = name + path.extname(req.file.originalname);
-        
-        let x = firebase.file(fileName).createWriteStream().end(req.file.buffer);
+            upload(req,res,function(err){
+                if(err){
+                    res.send({
+                        status:"Fail",
+                        message: "error occurred !!!",
+                        error_code: 1,
+                        err_desc: err,
+                        err_reason: "Wrong Extension file uploaded"
+                    })
+                    return;
+                }
+                //Multer gives us file info in req.file object
+                if(!req.file){
+                    res.send({
+                        status:"Fail",
+                        message: "error occurred !!!",
+                        error_code: 1,
+                        err_desc: "No file passed !!!"
+                    })
+                    return;
+                }
+                //console.log(req.file)
+                //console.log(JSON.parse(JSON.stringify(req.body)))
+                const name = saltedMd5(req.file.originalname,"social_app");
+                const fileName = name + path.extname(req.file.originalname);
 
-        const uploadData = new Content({
-            post : req.file.buffer,
-            email : req.query.email,
-            text : req.body.text,
-            status: "Active",
-            likes : 0,
-            comments: [],
-            createdAt: new Date()
-        });
+                let x = firebase.file(fileName).createWriteStream({
+                    metadata:{
+                        contentType : file.mimetype
+                    }
+                }).end(req.file.buffer);
 
-        uploadData
-            .save(uploadData)
-            .then(data =>{
-                res.send({
-                    status:"Success",
-                    message:"Post posted online !!!!!"
-                })
-            })
-            .catch(err =>{
-                res.send({
-                    status: "Error Occurred !!!",
-                    message: "can't post online due to error !!!!",
-                    error: err
-                })
+                const uploadData = new Content({
+                    post : req.file.buffer,
+                    email : req.query.email,
+                    text : req.body.text,
+                    fileType: req.file.mimetype,
+                    status: "Active",
+                    likes : 0,
+                    comments: [],
+                    createdAt: new Date()
+                });
+                uploadData
+                    .save(uploadData)
+                    .then(data =>{
+                        res.send({
+                            status:"Success",
+                            message:"Post posted online !!!!!"
+                        })
+                    })
+                    .catch(err =>{
+                        res.send({
+                            status: "Error Occurred !!!",
+                            message: "can't post online due to error !!!!",
+                            error: err
+                        })
+                    })
             })
     }
 }
