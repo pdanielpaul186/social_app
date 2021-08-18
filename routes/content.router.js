@@ -9,7 +9,10 @@ router.post("/",content.uploadPost);
 //find posts
 router.get("/",content.postList);
 
-//add new friends
-//router.put("/",profile.addFrnds);
+//like posts
+router.post("/like",content.postLike);
+
+//comment posts
+router.post("/comment",content.postComment);
 
 module.exports = router;

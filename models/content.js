@@ -8,7 +8,7 @@ const Content = new mongoose.Schema({
     firebaseFile:{type: String, required: false},
     status: {type: String, required: false},
     likes : {type: Number, required: false},
-    comments: [String],
+    commentID: [String],
     createdAt: {type: Date, required: false}
 });
 
