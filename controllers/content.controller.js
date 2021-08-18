@@ -15,7 +15,6 @@ const upload = multer({ //multer settings
 
 const Content = require('../models/content');
 const Profile = require('../models/profile');
-const Comment = require('../models/comment');
 const { file } = require('../config/firebase');
 const profile = require('../models/profile');
 const comment = require('../models/comment');
