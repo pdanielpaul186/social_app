@@ -18,4 +18,7 @@ router.post("/like",content.postLike);
 //comment posts
 router.post("/comment",content.postComment);
 
+//update posts
+router.put("/",content.updateCont);
+
 module.exports = router;

@@ -241,11 +241,34 @@ const viewCont = async function(req,res){
             })
     }
 }
-
+const updateCont = function (req,res){
+    if(!req.query._id && !req.body.text && !req.query.post_id){
+        res.send({
+            status:"Fail",
+            message : "Important data missing Kindly check and send again"
+        })
+    }
+    else{
+        Content.updateOne({$and:[{_id:req.query.post_id},{userID:req.query._id}]},{text:req.body.text})
+            .then(data =>{
+                res.send({
+                    status:"Success",
+                    message:"Your post is updated"
+                })
+            })
+            .catch(err=>{
+                res.send({
+                    status:"Fail",
+                    message:"Error occurred while querying !!!"
+                })
+            })
+    }
+}
 module.exports = {
     uploadPost : uploadPost,
     postList : postList,
     postLike : postLike,
     postComment : postComment,
-    viewCont : viewCont
+    viewCont : viewCont,
+    updateCont : updateCont
 }
