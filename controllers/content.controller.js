@@ -25,14 +25,14 @@ const comment = require('../models/comment');
 
 var uploadPost = async function(req,res){
     
-    if(!req.query.userID){
+    if(!req.query._id){
         res.send({
             status: "Error Occurred !!!",
             message: "Important Details Not Provided !!! \n Kindly Check !!!!"
         })
     }
     else{
-        Profile.countDocuments({_id:req.query.userID})
+        Profile.countDocuments({_id:req.query._id})
         .then(count =>{
             if(count>0){
                 upload(req,res,function(err){
@@ -68,7 +68,7 @@ var uploadPost = async function(req,res){
     
                     const uploadData = new Content({
                         post : req.file.buffer,
-                        userID : req.query.userID,
+                        userID : req.query._id,
                         text : req.body.text,
                         fileType: req.file.mimetype,
                         firebaseFile: fileName,

@@ -12,4 +12,7 @@ router.get("/",profile.profileSuggestion);
 //add new friends
 router.put("/",profile.addFrnds);
 
+//remove your friends
+router.put("/rmFrnds",profile.rmFrnds);
+
 module.exports = router;

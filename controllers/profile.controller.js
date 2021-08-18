@@ -1,4 +1,6 @@
+const profile = require('../models/profile');
 const Profile = require('../models/profile');
+const mongoose = require('mongoose');
 
 var createProfile = function (req,res){
     
@@ -116,9 +118,35 @@ var addFrnds = function (req,res){
         })
 }
 
+var rmFrnds = function(req,res){
+    if(!req.query._id && !req.body._id){
+        res.send({
+            status:"Fail",
+            message: "Send _id to move further"
+        })
+    }
+    else{
+        profile.updateOne({_id:req.query._id},{$pull:{friends:{$in:[req.body._id]}}},{multi: true})
+            .then(data =>{
+                console.log(data)
+                res.send({
+                    status : "Success",
+                    message: "you have removed a friend with _id ",
+                    _id : req.body._id
+                })
+            })
+            .catch(err=>{
+                res.send({
+                    status:"Fail",
+                    message:"Error occured while querying !!!"
+                })
+            })
+    }
+}
 
 module.exports = {
     createProfile : createProfile,
     profileSuggestion : profSugg,
-    addFrnds : addFrnds    
+    addFrnds : addFrnds,
+    rmFrnds: rmFrnds    
 }
