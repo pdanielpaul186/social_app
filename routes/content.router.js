@@ -21,4 +21,7 @@ router.post("/comment",content.postComment);
 //update posts
 router.put("/",content.updateCont);
 
+//remove posts
+router.put("/rmPost",content.rmPost);
+
 module.exports = router;

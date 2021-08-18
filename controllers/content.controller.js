@@ -264,11 +264,61 @@ const updateCont = function (req,res){
             })
     }
 }
+
+const rmPost = function(req,res){
+    if(!req.query._id && !req.query.post_id){
+        res.send({
+            status:"Fail",
+            message : "Important data missing Kindly check and send again"
+        })
+    }
+    else{
+
+        Content.findOne({$and:[{_id:req.query.post_id},{userID:req.query._id}]})
+            .then(data =>{
+                firebase.delete(JSON.stringify(data.firebaseFile))
+                    .then(()=>{
+                        console.log("Firebase File also deleted")
+                    })
+
+            })
+            .catch(err=>{
+                res.send({
+                    status:"Fail",
+                    message:"Error occurred while removing file from firebase !!!"
+                })
+            })
+        Content.deleteOne({$and:[{_id:req.query.post_id},{userID:req.query._id}]})
+            .then(data =>{
+                comment.deleteMany({postID:req.query.post_id})
+                    .then(data=>{
+                        res.send({
+                            status:"Success",
+                            message:"Your post is deleted"
+                        })
+                    })
+                    .catch(err=>{
+                        res.send({
+                            status:"Fail",
+                            message:"Error occurred while querying !!!"
+                        })
+                    })        
+            })
+            .catch(err=>{
+                res.send({
+                    status:"Fail",
+                    message:"Error occurred while querying !!!"
+                })
+            })
+    }
+}
+
 module.exports = {
     uploadPost : uploadPost,
     postList : postList,
     postLike : postLike,
     postComment : postComment,
     viewCont : viewCont,
-    updateCont : updateCont
+    updateCont : updateCont,
+    rmPost : rmPost
 }
