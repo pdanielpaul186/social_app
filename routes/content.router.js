@@ -6,8 +6,8 @@ var router = express.Router();
 //create new user for social app
 router.post("/",content.uploadPost);
 
-//find suggestions
-//router.get("/",profile.profileSuggestion);
+//find posts
+router.get("/",content.postList);
 
 //add new friends
 //router.put("/",profile.addFrnds);

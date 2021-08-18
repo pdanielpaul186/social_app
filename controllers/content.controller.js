@@ -19,14 +19,14 @@ const { file } = require('../config/firebase');
 
 var uploadPost = async function(req,res){
     
-    if(!req.query.email){
+    if(!req.query.userID){
         res.send({
             status: "Error Occurred !!!",
             message: "Important Details Not Provided !!! \n Kindly Check !!!!"
         })
     }
     else{
-        Profile.countDocuments({email:req.query.email})
+        Profile.countDocuments({_id:req.query.userID})
         .then(count =>{
             if(count>0){
                 upload(req,res,function(err){
@@ -63,7 +63,7 @@ var uploadPost = async function(req,res){
     
                     const uploadData = new Content({
                         post : req.file.buffer,
-                        email : req.query.email,
+                        userID : req.query.userID,
                         text : req.body.text,
                         fileType: req.file.mimetype,
                         firebaseFile: fileName,
@@ -99,6 +99,32 @@ var uploadPost = async function(req,res){
     }
 }
 
+var postList = function (req,res){
+    Profile.findOne({_id: req.query._id})
+        .then (async frndsData =>{
+            await Content.find({userID:{$in:frndsData.friends}},{post:0}).sort({createdAt: -1})
+                .then(postList =>{
+                    res.send({
+                        status:"Success",
+                        data : postList
+                    })
+                })
+                .catch(err1=>{
+                    res.send({
+                        status:"Error",
+                        message: "Error in retrieving the posts"
+                    })
+                })
+        })
+        .catch(err=>{
+            res.send({
+                status:"Error",
+                message: "Error in retrieving the friends list"
+            })
+        })
+}
+
 module.exports = {
-    uploadPost : uploadPost
+    uploadPost : uploadPost,
+    postList : postList
 }

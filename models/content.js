@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const Content = new mongoose.Schema({
     post : {data: Buffer ,type: String, required: true},
-    email : {type: String, required: true},
+    userID : {type: String, required: true},
     text : {type: String, required: false},
     fileType:{type: String, required: false},
     firebaseFile:{type: String, required: false},
