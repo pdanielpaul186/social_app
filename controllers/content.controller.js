@@ -10,6 +10,10 @@ const upload = multer({ //multer settings
             return callback(new Error('Wrong extension type'));
         }
         callback(null, true);
+    },
+    limits:{
+        files: 1,
+        fileSize: 15*1024*1024
     }
 }).single('file');;
 
@@ -37,8 +41,7 @@ var uploadPost = async function(req,res){
                             status:"Fail",
                             message: "error occurred !!!",
                             error_code: 1,
-                            err_desc: err,
-                            err_reason: "Wrong Extension file uploaded"
+                            err_desc: err
                         })
                         return;
                     }

@@ -6,7 +6,7 @@ const profileSchema = mongoose.Schema({
     age : {type: Number, required: false},
     gender : {type: String, required: false},
     dateOfBirth : {type: Date, required: false},
-    location : {type:{type: String, default: 'Point'}, coordinates:[Number],required: true},
+    location : {type:{type: String, default: 'Point'}, coordinates:[Number],required: false},
     friends : [String],
     createdAt: {type: Date, required: false}
 });
