@@ -56,8 +56,6 @@ var uploadPost = async function(req,res){
                         })
                         return;
                     }
-                    //console.log(req.file)
-                    //console.log(JSON.parse(JSON.stringify(req.body)))
                     const name = saltedMd5(req.file.originalname,"social_app");
                     const fileName = name + path.extname(req.file.originalname);
     
@@ -376,7 +374,28 @@ const rmPost = function(req,res){
                         .then(data =>{
                             firebase.file(data.firebaseFile).delete()
                                 .then(()=>{
-                                    console.log("Firebase File also deleted")
+                                    Content.deleteOne({$and:[{_id:req.query.post_id},{userID:req.query._id}]})
+                                        .then(data =>{
+                                            comment.deleteMany({postID:req.query.post_id})
+                                                .then(data=>{
+                                                    res.send({
+                                                        status:"Success",
+                                                        message:"Your post is deleted"
+                                                    })
+                                                })
+                                                .catch(err=>{
+                                                    res.send({
+                                                        status:"Fail",
+                                                        message:"Error occurred while querying !!!"
+                                                    })
+                                                })        
+                                        })
+                                        .catch(err=>{
+                                            res.send({
+                                                status:"Fail",
+                                                message:"Error occurred while querying !!!"
+                                            })
+                                        })
                                 })
 
                         })
@@ -384,28 +403,6 @@ const rmPost = function(req,res){
                             res.send({
                                 status:"Fail",
                                 message:"Error occurred while removing file from firebase !!!"
-                            })
-                        })
-                    Content.deleteOne({$and:[{_id:req.query.post_id},{userID:req.query._id}]})
-                        .then(data =>{
-                            comment.deleteMany({postID:req.query.post_id})
-                                .then(data=>{
-                                    res.send({
-                                        status:"Success",
-                                        message:"Your post is deleted"
-                                    })
-                                })
-                                .catch(err=>{
-                                    res.send({
-                                        status:"Fail",
-                                        message:"Error occurred while querying !!!"
-                                    })
-                                })        
-                        })
-                        .catch(err=>{
-                            res.send({
-                                status:"Fail",
-                                message:"Error occurred while querying !!!"
                             })
                         })
                 }

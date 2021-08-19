@@ -150,7 +150,6 @@ var addFrnds = function (req,res){
                                             })
                                     })
                                     .catch(err =>{
-                                        console.log(err);
                                         res.send({
                                             status: "Error Occurred !!!",
                                             message: "could not add friends due to error !!!!",
@@ -165,7 +164,6 @@ var addFrnds = function (req,res){
                             }
                         })
                         .catch(err=>{
-                            console.log(err)
                             res.send({
                                 status: "Error Occurred !!!",
                                 message: "could not add friends due to error !!!!",
@@ -235,7 +233,7 @@ var rmFrnds = function(req,res){
                         }
                      })
                      .catch(err=>{
-                         console.log(err)
+                         (err)
                         res.send({
                             status:"Fail",
                             message:"Error occured while querying !!!"
