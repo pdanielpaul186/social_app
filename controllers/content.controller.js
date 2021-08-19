@@ -19,6 +19,7 @@ const upload = multer({ //multer settings
 
 const Content = require('../models/content');
 const Profile = require('../models/profile');
+const Likes = require('../models/like');
 const { file } = require('../config/firebase');
 const profile = require('../models/profile');
 const comment = require('../models/comment');
@@ -107,12 +108,19 @@ var uploadPost = async function(req,res){
 var postList = function (req,res){
     Profile.findOne({_id: req.query._id})
         .then (async frndsData =>{
-            await Content.find({userID:{$in:frndsData.friends}},{post:0}).sort({createdAt: -1})
+            await Content.find({userID:{$in:frndsData.friends}},{post:0,likes:0,commentID:0}).sort({createdAt: -1})
                 .then(postList =>{
-                    res.send({
-                        status:"Success",
-                        data : postList
-                    })
+                    if(postList.length != 0){
+                        res.send({
+                            status:"Success",
+                            data : postList
+                        })
+                    }else{
+                        res.send({
+                            status:"Success",
+                            message : "There are no posts uploaded by your friends !!!!!!!"
+                        })
+                    }
                 })
                 .catch(err1=>{
                     res.send({
@@ -130,19 +138,90 @@ var postList = function (req,res){
 }
 
 var postLike = function(req,res){
-    Content.updateOne({_id:req.body._id},{$inc: {likes: 1}})
-        .then(data =>{
-            res.send({
-                status:"Success",
-                message: "You have liked this post"
-            })
+    if(!req.body._id && !req.query._id){
+        res.send({
+            status: "Error Occurred !!!",
+            message: "Important Details Not Provided !!! Kindly Check !!!!"
         })
-        .catch(err =>{
-            res.send({
-                status:"Fails",
-                message:"Like option is not working !!!!"
+    }else{
+        Content.countDocuments({_id:req.body._id})
+            .then(count =>{
+                if(count >0){
+                    Profile.countDocuments({_id:req.query._id})
+                    .then(prof =>{
+                        if(prof > 0){
+                            Likes.countDocuments({$and:[{userID:req.query._id},{postID:req.body._id}]})
+                            .then(lCount =>{
+                                if(lCount > 0){
+                                    res.send({
+                                        status:"Fail",
+                                        message:"You already liked this post !!!!!!"
+                                    })
+                                }else{
+                                    Content.updateOne({_id:req.body._id},{$inc: {likes: 1}})
+                                        .then(data =>{
+                                            const likeP = new Likes({
+                                                postID:req.body._id,
+                                                userID:req.query._id
+                                            });
+                                            likeP
+                                            .save(likeP)
+                                            .then(likeDone =>{
+                                                res.send({
+                                                    status:"Success",
+                                                    message: req.query._id+" has liked this post"
+                                                })
+                                            })
+                                            .catch(err=>{
+                                                res.send({
+                                                    status:"Fail",
+                                                    message: "Cant like this post"
+                                                })
+                                            })
+                                        })
+                                        .catch(err =>{
+                                            res.send({
+                                                status:"Fail",
+                                                message:"Like option is not working !!!!"
+                                            })
+                                        })
+                                }
+                            })
+                            .catch(err=>{
+                                res.send({
+                                    status:"Fail",
+                                    message:"Like option is not working !!!!"
+                                })
+                            })
+                            
+                        }else{
+                            res.send({
+                                status:"Fail",
+                                message:"Create profile to like this post.!!!!!"
+                            })
+                        }
+                    })
+                    .catch(err=>{
+                        res.send({
+                            status:"Fail",
+                            message:"Like action cant be done"
+                        })
+                    })
+
+                }else{
+                    res.send({
+                        status:"Fail",
+                        message:"Post not found !!!!"
+                    })
+                }
             })
-        })
+            .catch(err =>{
+                res.send({
+                    status:"Fail",
+                    message:"Like option is not working !!!!"
+                }) 
+            })
+    }
 }
 
 var postComment = function(req,res){
@@ -295,7 +374,7 @@ const rmPost = function(req,res){
                 if(count > 0){
                     Content.findOne({$and:[{_id:req.query.post_id},{userID:req.query._id}]})
                         .then(data =>{
-                            firebase.delete(JSON.stringify(data.firebaseFile))
+                            firebase.file(data.firebaseFile).delete()
                                 .then(()=>{
                                     console.log("Firebase File also deleted")
                                 })
