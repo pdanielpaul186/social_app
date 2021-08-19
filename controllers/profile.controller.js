@@ -2,6 +2,7 @@ const profile = require('../models/profile');
 const Profile = require('../models/profile');
 const mongoose = require('mongoose');
 const { query } = require('express');
+const e = require('express');
 
 var createProfile = function (req,res){
     
@@ -105,7 +106,6 @@ var profSugg = function (req,res){
                 }
             })
             .catch(err =>{
-                console.log(err);
                 res.send({
                     status: "Error Occurred !!!",
                     message: "can't retrive the profile suggestions due to error !!!!",
@@ -117,45 +117,77 @@ var profSugg = function (req,res){
 
 var addFrnds = function (req,res){
     let addFrnds = {
-        _id: req.body._id,
+        _id: req.query._id,
         friends:req.body.friends_id
     }
-
-    Profile.countDocuments({_id: addFrnds._id})
-        .then(count =>{
-            if(count > 0){
-                Profile.updateOne({_id: addFrnds._id},{$push: {friends: addFrnds.friends}},{safe: true,new: true, upsert: true })
-                    .then(data =>{
-                        res.send({
-                            status: "Success",
-                            message: "You have new friends !!!!",
-                            data: data
+    if(!req.query._id && !req.body.friends_id){
+        res.send({
+            status: "Error Occurred !!!",
+            message: "Important Details Not Provided !!!  Kindly Check !!!!"
+        })
+    }else{
+        Profile.countDocuments({_id: addFrnds.friends})
+            .then(count =>{
+                if(count > 0){
+                    Profile.countDocuments({$and:[{_id:addFrnds._id},{friends: {$elemMatch:{$in : addFrnds.friends}}}]})
+                        .then(fCount =>{
+                            if(fCount == 0){
+                                Profile.updateOne({_id: addFrnds._id},{$push: {friends: addFrnds.friends}},{safe: true,new: true, upsert: true })
+                                    .then(data =>{
+                                        Profile.updateOne({_id: addFrnds.friends},{$push: {friends: addFrnds._id}},{safe: true,new: true, upsert: true })
+                                            .then(frnds =>{
+                                                res.send({
+                                                    status: "Success",
+                                                    message: "You have new friends !!!!"
+                                                })
+                                            })
+                                            .catch(err=>{
+                                                res.send({
+                                                    status: "Error Occurred !!!",
+                                                    message: "could not add friends due to error !!!!",
+                                                    error: err
+                                                })        
+                                            })
+                                    })
+                                    .catch(err =>{
+                                        console.log(err);
+                                        res.send({
+                                            status: "Error Occurred !!!",
+                                            message: "could not add friends due to error !!!!",
+                                            error: err
+                                        })
+                                    })
+                            }else{
+                                res.send({
+                                    status: "Error Occurred !!!",
+                                    message: "Friend present in your list !!!!"
+                                })
+                            }
                         })
-                    })
-                    .catch(err =>{
-                        console.log(err);
-                        res.send({
-                            status: "Error Occurred !!!",
-                            message: "could not add friends due to error !!!!",
-                            error: err
+                        .catch(err=>{
+                            console.log(err)
+                            res.send({
+                                status: "Error Occurred !!!",
+                                message: "could not add friends due to error !!!!",
+                                error: err
+                            })
                         })
+                }
+                else{
+                    res.send({
+                        status: "Error Occurred !!!",
+                        message: "Friend profile not found !!!!"
                     })
-            }
-            else{
+                }
+            })
+            .catch(err =>{
                 res.send({
                     status: "Error Occurred !!!",
-                    message: "could not add friends !!!!"
+                    message: "could not add friends due to error !!!!",
+                    error: err
                 })
-            }
-        })
-        .catch(err =>{
-            console.log(err);
-            res.send({
-                status: "Error Occurred !!!",
-                message: "could not add friends due to error !!!!",
-                error: err
             })
-        })
+    }
 }
 
 var rmFrnds = function(req,res){
