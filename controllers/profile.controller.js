@@ -69,7 +69,7 @@ var profSugg = function (req,res){
     if(!req.query.coordinates && !req.query.distance){
         res.send({
             status: "Error Occurred !!!",
-            message: "Important Details Not Provided !!! \n Kindly Check !!!!"
+            message: "Important Details Not Provided !!!  Kindly Check !!!!"
         })
     }
     else{
@@ -77,25 +77,32 @@ var profSugg = function (req,res){
             coordinates : JSON.parse(req.query.coordinates),
             distance : req.query.distance
         }
+
+        var milesToRadian = function(miles){
+            var earthRadiusInMiles = 3959;
+            return miles / earthRadiusInMiles;
+        };
     
-        Profile.aggregate([
-            { $geoNear:{
-                near:{
-                    $geometry:{
-                        type: "Point",
-                        coordinates: profSuggestion.coordinates
+        Profile.find(
+            {"location":{
+                $geoWithin: {
+                    $centerSphere : [profSuggestion.coordinates, milesToRadian(req.query.distance) ]
                     }
-                },
-                key: 'location',
-                distanceField: profSuggestion.distance,
-                spherical: true
-            }}])
+                }
+            })
             .then(data =>{
-                res.send({
-                    status: "Success",
-                    message: "Your Profile suggestions are here !!!!",
-                    data: data
-                })
+                if(data.length == 0){
+                    res.send({
+                        status: "Success",
+                        message: "No Profiles in this search area!!!! Please expand your search area !!!!"
+                    })    
+                }else{
+                    res.send({
+                        status: "Success",
+                        message: "Your Profile suggestions are here !!!!",
+                        data: data
+                    })
+                }
             })
             .catch(err =>{
                 console.log(err);
