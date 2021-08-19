@@ -43,4 +43,14 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
+//when pm2 is used uncomment this code
+// app.listen(3200,()=>{
+//   if(err){
+//     console.log("PORT NOT AVAILABLE",err);
+//   }
+//   else{
+//     console.log("LISTENNING AT 3200");
+//   }
+// })
+
 module.exports = app;
