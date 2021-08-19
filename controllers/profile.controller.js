@@ -195,6 +195,12 @@ var rmFrnds = function(req,res){
 }
 
 var viewProf = function(req,res){
+    if(!req.query._id){
+        res.send({
+            status:"Fail",
+            message: "Send _id to move further"
+        })
+    }else{
     profile.findById({_id:req.query._id})
         .then(data =>{
             res.send({
@@ -209,6 +215,7 @@ var viewProf = function(req,res){
                 message:"Error occured while querying !!!"
             })
         })
+    }
 }
 
 module.exports = {
