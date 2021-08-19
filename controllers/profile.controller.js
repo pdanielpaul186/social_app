@@ -201,21 +201,46 @@ var rmFrnds = function(req,res){
         profile.countDocuments({_id:req.query._id})
             .then( count =>{
                 if(count > 0 ){
-                    profile.updateOne({_id:req.query._id},{$pull:{friends:{$in:[req.body._id]}}},{multi: true})
-                        .then(data =>{
-                            console.log(data)
+                    Profile.countDocuments({$and:[{_id:req.query._id},{friends: {$elemMatch:{$in : req.body._id}}}]})
+                     .then(fCount =>{
+                        if(fCount != 0){
+                            profile.updateOne({_id:req.query._id},{$pull:{friends:{$in:[req.body._id]}}},{multi: true})
+                                .then(data =>{
+                                    profile.updateOne({_id:req.body._id},{$pull:{friends:{$in:[req.query._id]}}},{multi: true})
+                                        .then(data=>{
+                                            res.send({
+                                                status : "Success",
+                                                message: "you have removed a friend with _id ",
+                                                _id : req.body._id
+                                            })
+                                        })
+                                        .catch(err =>{
+                                            res.send({
+                                                status:"Fail",
+                                                message:"Error occured while querying !!!"
+                                            })
+                                        })
+                                })
+                                .catch(err=>{
+                                    res.send({
+                                        status:"Fail",
+                                        message:"Error occured while querying !!!"
+                                    })
+                                })
+                        }else{
                             res.send({
-                                status : "Success",
-                                message: "you have removed a friend with _id ",
-                                _id : req.body._id
+                                status: "Error Occurred !!!",
+                                message: "Friend not present in your list !!!!"
                             })
-                        })
-                        .catch(err=>{
-                            res.send({
-                                status:"Fail",
-                                message:"Error occured while querying !!!"
-                            })
-                        })
+                        }
+                     })
+                     .catch(err=>{
+                         console.log(err)
+                        res.send({
+                            status:"Fail",
+                            message:"Error occured while querying !!!"
+                        })  
+                    })
                 }
                 else{
                     res.send({
