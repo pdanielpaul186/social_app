@@ -1,19 +1,20 @@
 const profile = require('../models/profile');
 const Profile = require('../models/profile');
 const mongoose = require('mongoose');
+const { query } = require('express');
 
 var createProfile = function (req,res){
     
     if(!req.body.name && !req.body.email){
         res.send({
             status: "Error Occurred !!!",
-            message: "Important Details Not Provided !!! \n Kindly Check !!!!"
+            message: "Important Details Not Provided !!! Kindly Check !!!!"
         })
     }
     else{
         
         Profile.countDocuments({email:req.body.email})
-            .then(data =>{
+            .then(async data =>{
                 if(data > 0 ){
                     res.send({
                         status: "Error Occurred !!!",
@@ -21,21 +22,28 @@ var createProfile = function (req,res){
                     })
                 }
                 else{
+                    function diff_years(dt2, dt1){
+                        var diff =(dt2.getTime() - dt1.getTime()) / 1000;
+                        diff /= (60 * 60 * 24);
+                        return Math.abs(Math.round(diff/365.25));
+                    }
+
                     const user_profile = new Profile({
                         name: req.body.name, 
                         email: req.body.email,
-                        age: req.body.age,
+                        age: diff_years(new Date(req.body.dateOfBirth), new Date()),
                         gender: req.body.gender,
                         dateOfBirth: req.body.dateOfBirth,
                         location: {"type": "Point","coordinates":req.body.location},
                         createdAt: new Date()
                     });
-                    user_profile
+                    await user_profile
                         .save(user_profile)
-                        .then(data =>{
+                        .then(idOfProf =>{
                             res.send({
                                 status: "Success",
-                                message: "Profile created successfully"
+                                message: "Profile created successfully!!!!!",
+                                _id:idOfProf._id
                             })
                         })
                         .catch(err =>{
@@ -46,6 +54,13 @@ var createProfile = function (req,res){
                             })        
                         })
                 }
+            })
+            .catch(err =>{
+                res.send({
+                    status: "Error Occurred !!!",
+                    message: "can't create the profile due to error !!!!",
+                    error: err
+                })        
             })
     }
 }
@@ -179,9 +194,27 @@ var rmFrnds = function(req,res){
     }
 }
 
+var viewProf = function(req,res){
+    profile.findById({_id:req.query._id})
+        .then(data =>{
+            res.send({
+                status:"Success",
+                message:"Your profile is here",
+                data : data
+            })
+        })
+        .catch(err =>{
+            res.send({
+                status:"Fail",
+                message:"Error occured while querying !!!"
+            })
+        })
+}
+
 module.exports = {
     createProfile : createProfile,
     profileSuggestion : profSugg,
     addFrnds : addFrnds,
-    rmFrnds: rmFrnds    
+    rmFrnds: rmFrnds,
+    viewProf : viewProf    
 }

@@ -11,10 +11,4 @@ const profileSchema = mongoose.Schema({
     createdAt: {type: Date, required: false}
 });
 
-profileSchema.method("toJSON",()=>{
-    const { _id, ...object } = this.toObject();
-    object.id = _id;
-    return object;
-})
-
 module.exports = mongoose.model('Profile',profileSchema);

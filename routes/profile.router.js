@@ -6,6 +6,9 @@ var router = express.Router();
 //create new user for social app
 router.post("/",profile.createProfile);
 
+//view own profile
+router.get("/viewProf",profile.viewProf);
+
 //find suggestions
 router.get("/",profile.profileSuggestion);
 
