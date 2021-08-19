@@ -304,11 +304,21 @@ const viewCont = async function(req,res){
     else{
         await Content.find({userID:req.query._id},{post:0}).sort({createdAt: -1})
             .then(data =>{
-                res.send({
-                    status:"Success",
-                    message:"Your posts are here !!!!",
-                    data : data
-                })
+                comment.find({_id:{$in:data.commentID}})
+                    .then(commentD =>{
+                        res.send({
+                            status:"Success",
+                            message:"Your posts are here !!!!",
+                            data : data,
+                            comments : commentD
+                        })
+                    })
+                    .catch(err=>{
+                        res.send({
+                            status:"Fail",
+                            message: "Error Ocurred while querying!!!!"
+                        })
+                    })
             })
             .catch(err =>{
                 res.send({
