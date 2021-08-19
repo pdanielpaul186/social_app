@@ -249,12 +249,29 @@ const updateCont = function (req,res){
         })
     }
     else{
-        Content.updateOne({$and:[{_id:req.query.post_id},{userID:req.query._id}]},{text:req.body.text})
-            .then(data =>{
-                res.send({
-                    status:"Success",
-                    message:"Your post is updated"
-                })
+        Content.countDocuments({$and:[{_id:req.query.post_id},{userID:req.query._id}]})
+            .then(count =>{
+                if(count > 0){
+                    Content.updateOne({$and:[{_id:req.query.post_id},{userID:req.query._id}]},{text:req.body.text})
+                        .then(data =>{
+                            res.send({
+                                status:"Success",
+                                message:"Your post is updated"
+                            })
+                        })
+                        .catch(err=>{
+                            res.send({
+                                status:"Fail",
+                                message:"Error occurred while querying !!!"
+                            })
+                        })
+                }
+                else{
+                    res.send({
+                        status:"Fail",
+                        message:"The post is not present !!!!!"
+                    })
+                }
             })
             .catch(err=>{
                 res.send({
@@ -273,36 +290,52 @@ const rmPost = function(req,res){
         })
     }
     else{
+        Content.countDocuments({$and:[{_id:req.query.post_id},{userID:req.query._id}]})
+            .then(count =>{
+                if(count > 0){
+                    Content.findOne({$and:[{_id:req.query.post_id},{userID:req.query._id}]})
+                        .then(data =>{
+                            firebase.delete(JSON.stringify(data.firebaseFile))
+                                .then(()=>{
+                                    console.log("Firebase File also deleted")
+                                })
 
-        Content.findOne({$and:[{_id:req.query.post_id},{userID:req.query._id}]})
-            .then(data =>{
-                firebase.delete(JSON.stringify(data.firebaseFile))
-                    .then(()=>{
-                        console.log("Firebase File also deleted")
-                    })
-
-            })
-            .catch(err=>{
-                res.send({
-                    status:"Fail",
-                    message:"Error occurred while removing file from firebase !!!"
-                })
-            })
-        Content.deleteOne({$and:[{_id:req.query.post_id},{userID:req.query._id}]})
-            .then(data =>{
-                comment.deleteMany({postID:req.query.post_id})
-                    .then(data=>{
-                        res.send({
-                            status:"Success",
-                            message:"Your post is deleted"
                         })
-                    })
-                    .catch(err=>{
-                        res.send({
-                            status:"Fail",
-                            message:"Error occurred while querying !!!"
+                        .catch(err=>{
+                            res.send({
+                                status:"Fail",
+                                message:"Error occurred while removing file from firebase !!!"
+                            })
                         })
-                    })        
+                    Content.deleteOne({$and:[{_id:req.query.post_id},{userID:req.query._id}]})
+                        .then(data =>{
+                            comment.deleteMany({postID:req.query.post_id})
+                                .then(data=>{
+                                    res.send({
+                                        status:"Success",
+                                        message:"Your post is deleted"
+                                    })
+                                })
+                                .catch(err=>{
+                                    res.send({
+                                        status:"Fail",
+                                        message:"Error occurred while querying !!!"
+                                    })
+                                })        
+                        })
+                        .catch(err=>{
+                            res.send({
+                                status:"Fail",
+                                message:"Error occurred while querying !!!"
+                            })
+                        })
+                }
+                else{
+                    res.send({
+                        status:"Fail",
+                        message:"The post is not present !!!!!"
+                    })
+                }
             })
             .catch(err=>{
                 res.send({

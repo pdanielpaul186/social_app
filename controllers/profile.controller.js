@@ -99,14 +99,32 @@ var addFrnds = function (req,res){
         friends:req.body.friends_id
     }
 
-    //console.log(JSON.stringify(addFrnds.friends))
-    Profile.updateOne({_id: addFrnds._id},{$push: {friends: addFrnds.friends}},{safe: true,new: true, upsert: true })
-        .then(data =>{
-            res.send({
-                status: "Success",
-                message: "You have new friends !!!!",
-                data: data
-            })
+    Profile.countDocuments({_id: addFrnds._id})
+        .then(count =>{
+            if(count > 0){
+                Profile.updateOne({_id: addFrnds._id},{$push: {friends: addFrnds.friends}},{safe: true,new: true, upsert: true })
+                    .then(data =>{
+                        res.send({
+                            status: "Success",
+                            message: "You have new friends !!!!",
+                            data: data
+                        })
+                    })
+                    .catch(err =>{
+                        console.log(err);
+                        res.send({
+                            status: "Error Occurred !!!",
+                            message: "could not add friends due to error !!!!",
+                            error: err
+                        })
+                    })
+            }
+            else{
+                res.send({
+                    status: "Error Occurred !!!",
+                    message: "could not add friends !!!!"
+                })
+            }
         })
         .catch(err =>{
             console.log(err);
@@ -126,14 +144,31 @@ var rmFrnds = function(req,res){
         })
     }
     else{
-        profile.updateOne({_id:req.query._id},{$pull:{friends:{$in:[req.body._id]}}},{multi: true})
-            .then(data =>{
-                console.log(data)
-                res.send({
-                    status : "Success",
-                    message: "you have removed a friend with _id ",
-                    _id : req.body._id
-                })
+        profile.countDocuments({_id:req.query._id})
+            .then( count =>{
+                if(count > 0 ){
+                    profile.updateOne({_id:req.query._id},{$pull:{friends:{$in:[req.body._id]}}},{multi: true})
+                        .then(data =>{
+                            console.log(data)
+                            res.send({
+                                status : "Success",
+                                message: "you have removed a friend with _id ",
+                                _id : req.body._id
+                            })
+                        })
+                        .catch(err=>{
+                            res.send({
+                                status:"Fail",
+                                message:"Error occured while querying !!!"
+                            })
+                        })
+                }
+                else{
+                    res.send({
+                        status:"Fail",
+                        message:"The profile is not present !!!!!"
+                    })
+                }
             })
             .catch(err=>{
                 res.send({
