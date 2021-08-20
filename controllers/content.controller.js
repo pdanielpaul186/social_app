@@ -3,26 +3,19 @@ const firebase = require('../config/firebase');
 const saltedMd5 = require('salted-md5');
 const path = require('path');
 const multer = require('multer');
-
-const fileFilt = (req, file, cb) => {
-    const fileSize = parseInt(req.headers['content-length']);  
-    if((file.mimetype === 'image/png' || file.mimetype === 'image/jpg' || file.mimetype === 'image/jpeg' || file.mimetype === 'image/tif'|| file.mimetype === 'image/tiff'|| file.mimetype === 'application/octet-stream') && (fileSize <= 15728640)) {
-    cb(null, true);
-    } else if((file.mimetype === 'video/mp4'|| file.mimetype === 'video/mov' || file.mimetype === 'video/avi') && (fileSize <= 31457280)) {
-    cb(null, true);
-    }
-    else {
-    cb(null, false);
-    }
-}    
-
+  
 const upload = multer({ //multer settings
-    fileFilter : fileFilt,
+    fileFilter : function(req, file, callback) { //file filter
+        if (['jpg','jpeg','png','gif','mp4','mov','avi'].indexOf(file.originalname.split('.')[file.originalname.split('.').length-1]) === -1) {
+            return callback(new Error('Wrong extension type'));
+        }
+        callback(null, true);
+    },
     limits:{
         files: 1,
-        fileSize: 15*1024*1024
+        fileSize: 30*1024*1024
     }
-}).single('file');;
+}).single('file');
 
 const Content = require('../models/content');
 const Profile = require('../models/profile');
@@ -113,7 +106,7 @@ var uploadPost = async function(req,res){
 var postList = function (req,res){
     Profile.findOne({_id: req.query._id})
         .then (async frndsData =>{
-            await Content.find({userID:{$in:frndsData.friends}},{post:0,likes:0,commentID:0}).sort({createdAt: -1})
+            await Content.find({userID:{$in:frndsData.friends}},{post:0,commentID:0}).sort({createdAt: -1})
                 .then(postList =>{
                     if(postList.length != 0){
                         res.send({

@@ -18,4 +18,7 @@ router.put("/",profile.addFrnds);
 //remove your friends
 router.put("/rmFrnds",profile.rmFrnds);
 
+//send friend request
+router.post("/frndReq",profile.frndReq);
+
 module.exports = router;

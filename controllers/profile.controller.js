@@ -1,8 +1,7 @@
 const profile = require('../models/profile');
 const Profile = require('../models/profile');
+const friends = require('../models/friends');
 const mongoose = require('mongoose');
-const { query } = require('express');
-const e = require('express');
 
 var createProfile = function (req,res){
     
@@ -67,45 +66,55 @@ var createProfile = function (req,res){
 }
 
 var profSugg = function (req,res){
-    if(!req.query.coordinates && !req.query.distance){
+    if(!req.query._id && !req.query.distance){
         res.send({
             status: "Error Occurred !!!",
             message: "Important Details Not Provided !!!  Kindly Check !!!!"
         })
     }
     else{
-        let profSuggestion = {
-            coordinates : JSON.parse(req.query.coordinates),
-            distance : req.query.distance
-        }
-
-        var milesToRadian = function(miles){
-            var earthRadiusInMiles = 3959;
-            return miles / earthRadiusInMiles;
-        };
-    
-        Profile.find(
-            {"location":{
-                $geoWithin: {
-                    $centerSphere : [profSuggestion.coordinates, milesToRadian(req.query.distance) ]
-                    }
+        Profile.findOne({_id:req.query._id})
+            .then(prof =>{
+                let profSuggestion = {
+                    coordinates : prof.location.coordinates,
+                    distance : req.query.distance
                 }
-            })
-            .then(data =>{
-                if(data.length == 0){
-                    res.send({
-                        status: "Success",
-                        message: "No Profiles in this search area!!!! Please expand your search area !!!!"
-                    })    
-                }else{
-                    res.send({
-                        status: "Success",
-                        message: "Your Profile suggestions are here !!!!",
-                        data: data
+        
+                var milesToRadian = function(miles){
+                    var earthRadiusInMiles = 3959;
+                    return miles / earthRadiusInMiles;
+                };
+            
+                Profile.find(
+                    {"location":{
+                        $geoWithin: {
+                            $centerSphere : [profSuggestion.coordinates, milesToRadian(req.query.distance) ]
+                            }
+                        }
                     })
-                }
+                    .then(data =>{
+                        if(data.length == 0){
+                            res.send({
+                                status: "Success",
+                                message: "No Profiles in this search area!!!! Please expand your search area !!!!"
+                            })    
+                        }else{
+                            res.send({
+                                status: "Success",
+                                message: "Your Profile suggestions are here !!!!",
+                                data: data
+                            })
+                        }
+                    })
+                    .catch(err =>{
+                        res.send({
+                            status: "Error Occurred !!!",
+                            message: "can't retrive the profile suggestions due to error !!!!",
+                            error: err
+                        })
+                    })
             })
-            .catch(err =>{
+            .catch(err=>{
                 res.send({
                     status: "Error Occurred !!!",
                     message: "can't retrive the profile suggestions due to error !!!!",
@@ -118,7 +127,8 @@ var profSugg = function (req,res){
 var addFrnds = function (req,res){
     let addFrnds = {
         _id: req.query._id,
-        friends:req.body.friends_id
+        friends:req.body.friends_id,
+        reqID:req.body.req_id
     }
     if(!req.query._id && !req.body.friends_id){
         res.send({
@@ -136,9 +146,19 @@ var addFrnds = function (req,res){
                                     .then(data =>{
                                         Profile.updateOne({_id: addFrnds.friends},{$push: {friends: addFrnds._id}},{safe: true,new: true, upsert: true })
                                             .then(frnds =>{
-                                                res.send({
-                                                    status: "Success",
-                                                    message: "You have new friends !!!!"
+                                                friends.deleteOne({_id:addFrnds.reqID})
+                                                .then(data=>{
+                                                    res.send({
+                                                        status: "Success",
+                                                        message: "You have new friends !!!!"
+                                                    })
+                                                })
+                                                .catch(err=>{
+                                                    res.send({
+                                                        status: "Error Occurred !!!",
+                                                        message: "could not add friends due to error !!!!",
+                                                        error: err
+                                                    }) 
                                                 })
                                             })
                                             .catch(err=>{
@@ -264,12 +284,22 @@ var viewProf = function(req,res){
         })
     }else{
     profile.findById({_id:req.query._id})
-        .then(data =>{
-            res.send({
-                status:"Success",
-                message:"Your profile is here",
-                data : data
-            })
+        .then(async data =>{
+            await friends.find({friendID:{$in:data._id}})
+                .then(frndReq =>{
+                    res.send({
+                        status:"Success",
+                        message:"Your profile is here",
+                        data : data,
+                        frndReq : frndReq
+                    })
+                })
+                .catch(err=>{
+                    res.send({
+                        status:"Fail",
+                        message:"Error occured while querying !!!"
+                    })        
+                })
         })
         .catch(err =>{
             res.send({
@@ -280,10 +310,59 @@ var viewProf = function(req,res){
     }
 }
 
+var frndReq = function(req,res){
+    if(!req.query._id && req.body.friends_id){
+        res.send({
+            status: "Error Occurred !!!",
+            message: "Important Details Not Provided !!!  Kindly Check !!!!"
+        })
+    }
+    else{
+        Profile.countDocuments({_id:req.query._id})
+            .then(prof =>{
+                if(prof > 0){
+                    const frnd = new friends({
+                        friendID:req.body.friends_id,
+                        userID:req.query._id
+                    });
+                    frnd
+                        .save(frnd)
+                        .then(data =>{
+                            res.send({
+                                status:"Success",
+                                message:"Friend Request Sent !!!!",
+                                _id:data._id
+                            })
+                        })
+                        .catch(err=>{
+                            console.log(err)
+                            res.send({
+                                status:"Fail",
+                                message:"Cant send friend request"
+                            })
+                        })
+                }
+                else{
+                    res.send({
+                        status:"Fail",
+                        message:"Create profile !!!"
+                    })    
+                }
+            })
+            .catch(err =>{
+                res.send({
+                    status:"Fail",
+                    message:"Error occured while querying !!!"
+                })
+            })
+    }
+}
+
 module.exports = {
     createProfile : createProfile,
     profileSuggestion : profSugg,
     addFrnds : addFrnds,
     rmFrnds: rmFrnds,
-    viewProf : viewProf    
+    viewProf : viewProf,
+    frndReq : frndReq    
 }
